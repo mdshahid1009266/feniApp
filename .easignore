@@ -1,0 +1,14 @@
+# Ignore node_modules (Expo already installs dependencies)
+node_modules
+.git
+.expo
+.vscode
+.idea
+.DS_Store
+*.log
+debug
+android/.gradle
+android/app/build
+android/build
+ios/Pods
+ios/build
