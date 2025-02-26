@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert } from 'react-native';
 
@@ -6,45 +6,57 @@ import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert } from 
 import { setContext } from "../../../context/userContext";
 import { useLocalSearchParams } from 'expo-router';
 
+import { createOrder } from '../../api';
+
 export default function OrderConfirmationScreen() {
-  const { pid } = useLocalSearchParams();
+  const { pid, pname, pprice } = useLocalSearchParams();
   // Access global user state
   const { isLogged, user } = setContext();
 
+  // Convert pprice to a number
+  const productPrice = parseFloat(pprice) || 0;
+
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
+    number: '',
     address: '',
-    product: '',
-    quantity: '',
-    specialRequest: ''
+    quantity: 1,
+    specialRequest: '',
+    pid: pid || '',
+    pprice: pprice || 0,
+    pname: pname || '',  // Keep pname here
   });
 
   const [errors, setErrors] = useState({});
 
-  // When the component mounts or when isLogged/user changes,
-  // pre-fill the formData with user details if available.
+  // Pre-fill form data if user details exist
   useEffect(() => {
     if (isLogged && user) {
       setFormData(prev => ({
         ...prev,
         name: user.name || '',
-        phone: user.phone || '',
+        number: user.number || '',
         address: user.address || ''
       }));
     }
   }, [isLogged, user]);
 
+  // Update pname directly in formData
+  useEffect(() => {
+    if (pname) {
+      setFormData(prev => ({ ...prev, pname: pname }));
+    }
+  }, [pname]);
+
   const validateForm = () => {
     let newErrors = {};
-    const phoneRegex = /^01\d{9}$/;
+    const numberRegex = /^01\d{9}$/;
 
     if (!formData.name.trim()) newErrors.name = 'নাম প্রয়োজন';
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = 'সঠিক ফোন নম্বর লিখুন';
+    if (!numberRegex.test(formData.number)) newErrors.number = 'সঠিক ফোন নম্বর লিখুন';
     if (!formData.address.trim()) newErrors.address = 'ঠিকানা প্রয়োজন';
-    if (!formData.product.trim()) newErrors.product = 'পণ্যের নাম প্রয়োজন';
-    if (!formData.quantity || isNaN(formData.quantity) || formData.quantity <= 0)
-      newErrors.quantity = 'যথাযথ পরিমাণ লিখুন';
+    if (formData.quantity < 1 || formData.quantity > 100)
+      newErrors.quantity = 'পরিমাণ ১ থেকে ১০০ এর মধ্যে হওয়া উচিত';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -55,34 +67,63 @@ export default function OrderConfirmationScreen() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleSubmit = () => {
+  const incrementQuantity = () => {
+    setFormData(prev => {
+      const newQuantity = prev.quantity < 100 ? prev.quantity + 1 : 100;
+      return { ...prev, quantity: newQuantity };
+    });
+  };
+
+  const decrementQuantity = () => {
+    setFormData(prev => {
+      const newQuantity = prev.quantity > 1 ? prev.quantity - 1 : 1;
+      return { ...prev, quantity: newQuantity };
+    });
+  };
+
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    console.log('Order Data:', formData);
-    Alert.alert('অর্ডার নিশ্চিত!', 'আপনার অর্ডার সফলভাবে নিশ্চিত হয়েছে');
-    // Reset form
-    setFormData({
-      name: isLogged && user ? user.name || '' : '',
-      phone: isLogged && user ? user.phone || '' : '',
-      address: isLogged && user ? user.address || '' : '',
-      product: '',
-      quantity: '',
-      specialRequest: ''
-    });
+    // Calculate the total price based on quantity
+    const updatedPrice = productPrice * formData.quantity;
+
+    // Add the updatedPrice to formData
+    const updatedFormData = {
+      ...formData,
+      totalPrice: updatedPrice,  // Add the updated price to formData
+    };
+
+    try {
+      await createOrder(updatedFormData);
+      Alert.alert('আপনার অর্ডারটি সফলভাবে সম্পন্ন হয়েছে');
+      setFormData({
+        name: isLogged && user ? user.name || '' : '',
+        number: isLogged && user ? user.number || '' : '',
+        address: isLogged && user ? user.address || '' : '',
+        pname: pname || '', // Keep pname in the reset form
+        quantity: 1,
+        specialRequest: '',
+        pid: pid || '',  // Keep pid in the reset form
+      });
+
+    } catch (error) {
+      Alert.alert('অর্ডার নিশ্চিতকরণ সফলভাবে সম্পন্ন হয়নি');
+    }
+
   };
 
   const [fontsLoaded] = useFonts({
     BanglaFont: require("../../../assets/fonts/SolaimanLipi.ttf"),
   });
 
-  useEffect(() => {
-    console.log("pid", pid);
+  if (!fontsLoaded) return null;
 
-  },);
+  // Calculate total price based on the current quantity
+  const totalPrice = productPrice * formData.quantity;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>অর্ডার নিশ্চিতকরণ ফর্ম</Text>
+      <Text style={styles.header}>অর্ডার নিশ্চিত করুন</Text>
 
       {/* Name Input */}
       <View style={styles.formGroup}>
@@ -96,17 +137,17 @@ export default function OrderConfirmationScreen() {
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
       </View>
 
-      {/* Phone Input */}
+      {/* Phone Number Input */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>ফোন নম্বর *</Text>
         <TextInput
-          style={[styles.input, errors.phone && styles.errorInput]}
-          value={formData.phone}
-          onChangeText={(text) => handleInputChange('phone', text)}
+          style={[styles.input, errors.number && styles.errorInput]}
+          value={formData.number}
+          onChangeText={(text) => handleInputChange('number', text)}
           placeholder="01XXXXXXXXX"
           keyboardType="phone-pad"
         />
-        {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+        {errors.number && <Text style={styles.errorText}>{errors.number}</Text>}
       </View>
 
       {/* Address Input */}
@@ -121,28 +162,39 @@ export default function OrderConfirmationScreen() {
         {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
       </View>
 
-      {/* Product Input */}
+      {/* Product Display */}
       <View style={styles.formGroup}>
-        <Text style={styles.label}>পণ্য *</Text>
-        <TextInput
-          style={[styles.input, errors.product && styles.errorInput]}
-          value={formData.product}
-          onChangeText={(text) => handleInputChange('product', text)}
-          placeholder="পণ্যের নাম লিখুন"
-        />
-        {errors.product && <Text style={styles.errorText}>{errors.product}</Text>}
+        <Text style={styles.label}>পণ্য</Text>
+        <View style={styles.productContainer}>
+          <Text style={styles.productText}>{pname || 'পণ্য নির্বাচন করুন'}</Text>
+        </View>
       </View>
 
-      {/* Quantity Input */}
+      {/* Quantity and Price Section */}
       <View style={styles.formGroup}>
-        <Text style={styles.label}>পরিমাণ *</Text>
-        <TextInput
-          style={[styles.input, errors.quantity && styles.errorInput]}
-          value={formData.quantity}
-          onChangeText={(text) => handleInputChange('quantity', text)}
-          placeholder="পরিমাণ লিখুন"
-          keyboardType="numeric"
-        />
+        <Text style={styles.label}>পরিমাণ ও মূল্য *</Text>
+        <View style={styles.quantityRow}>
+          <View style={[styles.quantityControl, errors.quantity && styles.errorInput]}>
+            <Pressable
+              style={[styles.quantityButton, formData.quantity <= 1 && styles.disabledButton]}
+              onPress={decrementQuantity}
+              disabled={formData.quantity <= 1}
+            >
+              <Text style={styles.quantityButtonText}>–</Text>
+            </Pressable>
+            <Text style={styles.quantityValue}>{formData.quantity}</Text>
+            <Pressable
+              style={[styles.quantityButton, formData.quantity >= 100 && styles.disabledButton]}
+              onPress={incrementQuantity}
+              disabled={formData.quantity >= 100}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </Pressable>
+          </View>
+          <View style={styles.priceContainer}>
+            <Text style={styles.priceValue}>৳ {totalPrice.toFixed(2)}</Text>
+          </View>
+        </View>
         {errors.quantity && <Text style={styles.errorText}>{errors.quantity}</Text>}
       </View>
 
@@ -170,7 +222,7 @@ export default function OrderConfirmationScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#f2f6ff',
     paddingBottom: 40,
   },
   header: {
@@ -185,7 +237,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 22,
+    fontSize: 20,
     color: '#34495E',
     marginBottom: 8,
     fontWeight: '500',
@@ -211,16 +263,87 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontFamily: 'BanglaFont',
   },
+  productContainer: {
+    backgroundColor: '#eceff6',
+    padding: 14,
+    borderRadius: 10,
+  },
+  productText: {
+    fontSize: 18,
+    color: '#2C3E50',
+    fontFamily: 'BanglaFont',
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  quantityControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#DEE2E6',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  quantityButton: {
+    backgroundColor: '#2980B9',
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#a6c8e0',
+  },
+  quantityButtonText: {
+    fontSize: 22,
+    color: 'white',
+    fontWeight: '600',
+    fontFamily: 'BanglaFont',
+  },
+  quantityValue: {
+    fontSize: 20,
+    color: '#2C3E50',
+    fontWeight: '500',
+    fontFamily: 'BanglaFont',
+    marginHorizontal: 20,
+  },
+  priceContainer: {
+    marginLeft: 20,
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: '#34495E',
+    fontFamily: 'BanglaFont',
+  },
+  priceValue: {
+    fontSize: 18,
+    color: '#2C3E50',
+    fontWeight: '500',
+    fontFamily: 'BanglaFont',
+  },
   multilineInput: {
     height: 100,
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#2980B9',
+    backgroundColor: '#27ae60',
     padding: 16,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
   },
   submitButtonText: {
     color: 'white',

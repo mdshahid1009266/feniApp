@@ -12,67 +12,57 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
-
-const lostItemsData = [
-  {
-    id: '1',
-    description: 'Lost Wallet near the park. Black leather wallet with several cards.',
-    contact: '1234567890',
-  },
-  {
-    id: '2',
-    description: 'Missing keys – silver keychain with a red ribbon.',
-    contact: '0987654321',
-  },
-  {
-    id: '3',
-    description: 'Lost Dog: Brown Labrador spotted near downtown.',
-    contact: '5555555555',
-  },
-  // Add more items as needed
-];
+import { getAllLostPerson } from "../app/api";
 
 const LostAndFoundScreen = () => {
-  const [items, setItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [peopleData, setPeopleData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filteredData, setFilteredData] = useState([]);
 
-  // Simulate fetching data from an API
+  // Fetch data from API on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulate network delay
-        setTimeout(() => {
-          setItems(lostItemsData);
-          setFilteredItems(lostItemsData);
-          setIsLoading(false);
-        }, 1000);
+        const data = await getAllLostPerson();
+        // Map the API data to match the component's expected field names
+        const mappedData = data.map(item => ({
+          ...item,
+          contact: item.number,      // Map 'number' to 'contact'
+          image: item.imageUrl,      // Map 'imageUrl' to 'image'
+        }));
+        setPeopleData(mappedData);
+        setFilteredData(mappedData);
+        setLoading(false);
       } catch (error) {
-        setFetchError('Failed to fetch lost items.');
-        setIsLoading(false);
+        console.error("Fetch error:", error);
+        setLoading(false);
+        Alert.alert('Error', 'Failed to fetch lost persons. Please check your network or try again later.');
       }
     };
 
     fetchData();
   }, []);
 
-  // Update filtered items as the search term changes
+  // Handle search input changes
   const handleSearch = (text) => {
-    setSearchTerm(text);
+    setSearchQuery(text);
     if (text === '') {
-      setFilteredItems(items);
+      setFilteredData(peopleData);
     } else {
-      const filtered = items.filter((item) =>
+      const filtered = peopleData.filter((item) =>
         item.description.toLowerCase().includes(text.toLowerCase())
       );
-      setFilteredItems(filtered);
+      setFilteredData(filtered);
     }
   };
 
-  // Handle the contact call button press
+  // Handle the contact call action
   const handleCall = async (contact) => {
+    if (!contact) {
+      Alert.alert('Error', 'Contact information is not available for this person.');
+      return;
+    }
     const url = `tel:${contact}`;
     try {
       const supported = await Linking.canOpenURL(url);
@@ -82,18 +72,26 @@ const LostAndFoundScreen = () => {
         Alert.alert('Error', 'Phone calls are not supported on this device.');
       }
     } catch (error) {
+      console.error("Call error:", error);
       Alert.alert('Error', 'An error occurred while trying to make the call.');
     }
   };
 
-  // Render each lost item as a card
+  // Render each lost person as a card
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image
         source={item.image ? { uri: item.image } : require('../assets/images/demo.jpg')}
         style={styles.image}
+        resizeMode="cover"
+        onError={(error) => console.error("Image load error:", error.nativeEvent.error)}
       />
       <Text style={styles.description}>{item.description}</Text>
+      {item.createdAt && (
+        <Text style={styles.dateText}>
+          Reported on: {new Date(item.createdAt).toLocaleDateString()}
+        </Text>
+      )}
       <TouchableOpacity
         style={styles.contactButton}
         onPress={() => handleCall(item.contact)}
@@ -104,18 +102,11 @@ const LostAndFoundScreen = () => {
     </View>
   );
 
-  if (isLoading) {
+  // Show loading indicator while fetching data
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#3498db" />
-      </View>
-    );
-  }
-
-  if (fetchError) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{fetchError}</Text>
       </View>
     );
   }
@@ -126,22 +117,22 @@ const LostAndFoundScreen = () => {
         <Ionicons name="search" size={20} color="#aaa" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search lost items..."
-          value={searchTerm}
+          placeholder="Search lost persons..."
+          value={searchQuery}
           onChangeText={handleSearch}
         />
       </View>
-      {filteredItems.length === 0 ? (
+      {filteredData.length === 0 ? (
         <View style={styles.noResultsContainer}>
-          <Text style={styles.noResultsText}>No items found.</Text>
+          <Text style={styles.noResultsText}>No persons found.</Text>
         </View>
       ) : (
         <FlatList
-          data={filteredItems}
+          data={filteredData}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id || item.imageId} // Use 'id' or 'imageId' as fallback
           contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false} 
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -151,87 +142,83 @@ const LostAndFoundScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '',
-    width: '100%',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 16,
-    elevation: 2, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width: '100%',
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    color: '#333',
-    width: '100%',
-  },
-  listContainer: {
-    paddingBottom: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 12,
-    elevation: 3, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    // paddingVertical: 8,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 12,
-  },
-  contactButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#3498db',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    width: '100%',
-    justifyContent: 'center',
-  },
-  contactButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    backgroundColor: '#f4f4f4',
+    paddingHorizontal: 15,
+    paddingTop: 20,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  errorText: {
-    color: 'red',
-    fontSize: 18,
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
+  },
+  contactButton: {
+    backgroundColor: '#3498db',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  contactButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
   },

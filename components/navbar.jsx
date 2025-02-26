@@ -8,7 +8,7 @@ const Navbar = () => {
     const navigation = useNavigation(); // Get navigation object
 
     return (
-        <View className="flex flex-row items-center justify-between bg-primary-500 px-4 py-3 shadow-md">
+        <View className="flex flex-row items-center justify-between bg-black px-4 py-3 shadow-md">
             {/* Drawer Menu Button */}
             <Pressable onPress={() => navigation.openDrawer()} className="p-2">
                 <Ionicons name="menu" size={24} color="#fff" />
@@ -16,7 +16,7 @@ const Navbar = () => {
 
             {/* App Name */}
             <Text className="text-lg font-bold text-white">
-                FeniCity
+                Upokar
             </Text>
 
             {/* Info Icon */}

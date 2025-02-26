@@ -1,78 +1,34 @@
 // ProductsPage.jsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FlatList, Image, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView, View, Text } from 'react-native';
-import { Feather } from '@expo/vector-icons'; // Optional icon library
+import { Feather } from '@expo/vector-icons';
 import { Link, useLocalSearchParams } from 'expo-router';
+import { getAllProducts } from "../../api";
+import Loader from "../../../components/skeleton";
 
-// Dummy data for products. Replace this with your API call or state management logic.
-const products = [
-    {
-        id: 1,
-        name: 'Wireless Headphones',
-        price: 99.99,
-        image:
-            'https://img.drz.lazcdn.com/static/bd/p/53a59dd888ab235550765404c3dcfeb4.jpg_720x720q80.jpg_.webp',
-    },
-    {
-        id: 2,
-        name: 'Smart Watch',
-        price: 199.99,
-        image:
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-        id: 3,
-        name: 'Gaming Mouse',
-        price: 49.99,
-        image:
-            'https://img.drz.lazcdn.com/static/bd/p/21f8ab342d310b24d2605542af2a33e0.jpg_720x720q80.jpg_.webp',
-    },
-    {
-        id: 4,
-        name: 'Mechanical Keyboard',
-        price: 89.99,
-        image:
-            'https://images.unsplash.com/photo-1593642532973-d31b6557fa68?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-        id: 5,
-        name: 'Gaming Mouse',
-        price: 49.99,
-        image:
-            'https://img.drz.lazcdn.com/static/bd/p/21f8ab342d310b24d2605542af2a33e0.jpg_720x720q80.jpg_.webp',
-    },
-    {
-        id: 6,
-        name: 'Mechanical Keyboard',
-        price: 89.99,
-        image:
-            'https://images.unsplash.com/photo-1593642532973-d31b6557fa68?auto=format&fit=crop&w=800&q=80',
-    },
-    // Add more products as needed...
-];
-
-// A reusable Product Card component
 const ProductCard = ({ product, onPress }) => {
+    const imageUrl = product.images && product.images.length > 0 ? product.images[0].url : "https://via.placeholder.com/150"; // Default image if no image url
+
     return (
         <Link
             href={{
                 pathname: "manu3/product",
-                params: { pid: product.id }
+                params: { pid: product._id } // Use product._id as pid
             }}
             className="bg-white rounded-lg shadow m-2 flex-1"
             activeOpacity={0.8}
         >
             <Image
-                source={{ uri: product.image }}
-                className="w-full h-32 rounded-lg"
+                source={{ uri: imageUrl }}
+                className="w-full h-32 rounded-t-lg" // rounded-t-lg for top rounded corners
                 resizeMode="cover"
             />
             <View className="p-2">
                 <Text className="text-lg font-semibold text-gray-800">
                     {product.name}
                 </Text>
-                <Text className="text-gray-500 mt-1">${product.price.toFixed(2)}</Text>
+                <Text className="text-gray-500 mt-1">TK {product.price.toFixed(2)}</Text>
             </View>
         </Link>
     );
@@ -80,21 +36,34 @@ const ProductCard = ({ product, onPress }) => {
 
 const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [products, setProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { catagory } = useLocalSearchParams();
 
-    // Filter products based on the search term
     const filteredProducts = useMemo(() => {
         if (!searchTerm) return products;
         return products.filter((product) =>
             product.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [searchTerm]);
+    }, [searchTerm, products]);
 
-    const handleProductPress = (product) => {
-        console.log('Product pressed:', product);
-        // Navigate to product detail page or perform other actions
-    };
-    const { catagory } = useLocalSearchParams();
-    console.log(catagory);
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await getAllProducts(catagory);
+                setProducts(response);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProducts();
+    }, [catagory]); // Added category as dependency
+
+    if (isLoading) {
+        return <Loader />;
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-blue-100">
@@ -114,21 +83,22 @@ const ProductsPage = () => {
             {/* Product Grid */}
             {filteredProducts.length === 0 ? (
                 <View className="flex-1 justify-center items-center">
-                    <Text className="text-gray-500 text-lg font-[BanglaFont]">কোনো পণ্য পাওয়া যায়নি</Text>
+                    <Text className="text-gray-500 text-lg font-[BanglaFont]">
+                        <Text>কোনো পণ্য পাওয়া যায়নি</Text> {/* Added an extra <Text> wrapper - for debugging */}
+                    </Text>
                 </View>
             ) : (
                 <FlatList
                     data={filteredProducts}
-                    keyExtractor={(item) => item.id.toString()}
-                    numColumns={2} // Two products per row
+                    keyExtractor={(item) => item._id.toString()}
+                    numColumns={2}
                     contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 20 }}
                     renderItem={({ item }) => (
-                        <ProductCard product={item} onPress={handleProductPress} />
+                        <ProductCard product={item} />
                     )}
                     showsVerticalScrollIndicator={false}
                 />
             )}
-
         </SafeAreaView>
     );
 };

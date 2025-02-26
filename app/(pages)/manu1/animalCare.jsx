@@ -72,7 +72,7 @@ const AnimalCarePage = () => {
           onPress={() => handleWhatsApp(item.phone)}
         >
           <Icon name="whatsapp" size={20} color="#fff" />
-          <Text style={styles.buttonText}>হোয়াটসঅ্যাপ</Text>
+          <Text className='font-[BanglaFont] text-white text-2xl ml-2' >হোয়াটসঅ্যাপ</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -11,7 +11,7 @@ const Home = () => {
         <SafeAreaView style={{ flex: 1 }}>
             <View style={{ flex: 1 }} className='bg-blue-100'>
                 <StatusBar
-                    backgroundColor="#0984e3" // Set background color
+                    backgroundColor="#000" // Set background color
                     barStyle="light-content" // Set text color (light-content for dark text, dark-content for light text) 
                     hidden={false} // Show or hide the status bar (true to hide)
                     translucent={false} // Set to true for semi-transparent status bar 

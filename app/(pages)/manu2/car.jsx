@@ -1,11 +1,15 @@
 import { useFonts } from 'expo-font';
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert, Modal, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert, Modal, TouchableOpacity, Linking } from 'react-native';
+import { setContext } from '../../../context/userContext';
+import { createCarOrder } from '../../api';
+
 
 export default function CarRentalScreen() {
+  const { user } = setContext();
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
+    name: user?.name || '',
+    phone: user?.number || '',
     pickup: '',
     destination: '',
     date: '',
@@ -42,23 +46,56 @@ export default function CarRentalScreen() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) return;
+  const openWhatsApp = async () => {
+    const phoneNumber = '88018776545654';
+    const message = 'হ্যালো, এটা আমার অ্যাপ থেকে একটি বার্তা।';
+    const whatsappURL = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
-    console.log('Booking Data:', formData);
-    Alert.alert('বুকিং সফল!', 'আপনার বুকিংটি সফলভাবে সম্পন্ন হয়েছে');
-    // Reset form
-    setFormData({
-      name: '',
-      phone: '',
-      pickup: '',
-      destination: '',
-      date: '',
-      time: '',
-      carType: '',
-      passengers: '',
-      specialRequest: ''
-    });
+    try {
+      const supported = await Linking.canOpenURL(whatsappURL);
+
+      if (supported) {
+        await Linking.openURL(whatsappURL);
+      } else {
+        Alert.alert(
+          'WhatsApp ইনস্টল করা নেই', 'WhatsApp ইনস্টল করুন বার্তা পাঠানোর জন্য।',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening WhatsApp:', error);
+      Alert.alert(
+        'কিছু ভুল হয়েছে। দয়া করে আবার চেষ্টা করুন।',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    try {
+      const response = await createCarOrder(formData);
+      if (!response) {
+        Alert.alert('Error', 'Failed to create order');
+        return;
+      }
+      Alert.alert('বুকিং সফল!', 'আপনার বুকিংটি সফলভাবে সম্পন্ন হয়েছে');
+      console.log('Booking Data:', response);
+      setFormData({
+        name: '',
+        phone: '',
+        pickup: '',
+        destination: '',
+        date: '',
+        time: '',
+        carType: '',
+        passengers: '',
+        specialRequest: ''
+      });
+    } catch (error) {
+      console.error('Error creating car order:', error);
+      Alert.alert('Error', 'Failed to create order');
+      return;
+    }
   };
 
   const renderCarTypeSelector = () => (
@@ -238,7 +275,7 @@ export default function CarRentalScreen() {
       }}>সরাসরি বুকিং দিতে যোগাযোগ করুন</Text>
       <Pressable
         style={styles.submitButton1}
-        onPress={handleSubmit}>
+        onPress={openWhatsApp}>
         <Text className='text-white text-xl font-bold'>WhatsApp</Text>
       </Pressable>
 
@@ -357,7 +394,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 8,
-    backgroundColor:"#25D366"
+    backgroundColor: "#25D366"
   },
   submitButtonText: {
     color: 'white',

@@ -40,9 +40,9 @@ const styles = StyleSheet.create({
 
 const Menu1 = () => {
     const menuItems = [
-        { name: 'CAR লাগবে', image: require('../../assets/images/menu/menu2/image1.png'), ref: "manu2/car" },
-        { name: 'BUS  লাগবে', image: require('../../assets/images/menu/menu2/image2.jpg'), ref: "manu2/bus" },
-        { name: 'TRUCK লাগবে', image: require('../../assets/images/menu/menu2/image3.png'), ref: "manu2/truck" },
+        { name: 'CAR লাগবে', image: require('../../assets/images/menu/menu2/image1.jpg'), ref: "manu2/car" },
+        { name: 'BUS  লাগবে', image: require('../../assets/images/menu/menu2/image2.jpeg'), ref: "manu2/bus" },
+        { name: 'TRUCK লাগবে', image: require('../../assets/images/menu/menu2/image3.jpg'), ref: "manu2/truck" },
         { name: 'CNG লাগবে', image: require('../../assets/images/menu/menu2/image4.png'), ref: "manu2/cng" },
         { name: 'BIKE লাগবে', image: require('../../assets/images/menu/menu2/image6.jpg'), ref: "manu2/bike" },
         { name: 'লেগুনা লাগবে', image: require('../../assets/images/menu/menu2/image5.jpg'), ref: "manu2/leguna" },

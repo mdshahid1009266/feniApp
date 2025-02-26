@@ -3,10 +3,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Link, useNavigation } from 'expo-router';
 
 import image1 from '../assets/images/menu/image1.png';
-import image2 from '../assets/images/menu/image2.png';
+import image2 from '../assets/images/menu/image2.jpeg';
 import image3 from '../assets/images/menu/image3.png';
 import image4 from '../assets/images/menu/image4.jpg';
-import image5 from '../assets/images/menu/image5.jpg';
+import image5 from '../assets/images/menu/image4.jpeg';
 import image6 from '../assets/images/menu/image6.png';
 import image7 from '../assets/images/menu/image7.png';
 import image8 from '../assets/images/menu/image8.jpeg';
@@ -73,7 +73,7 @@ export default function App() {
     const menuItems = [
         { name: 'চিকিৎসা', image: image1, ref: "menu1" },
         { name: 'গাড়ি ভাড়া', image: image2, ref: "menu2" },
-        { name: 'বেচা-কেনা', image: image3, ref: "menu3" },
+        { name: 'ক্রয়-বিক্রয়', image: image3, ref: "menu3" },
         { name: 'সিলিন্ডার লাগবে', image: image5, ref: "menu4" },
         { name: 'কমিউনিটি সেন্টার', image: image4, ref: "community" },
         { name: 'টিউশন', image: image6, ref: "tuitions" },

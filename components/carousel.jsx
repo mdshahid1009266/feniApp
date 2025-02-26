@@ -1,10 +1,10 @@
 import { View, StyleSheet, Dimensions, Text, Image } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Carousel from 'pinar';
 import Constants from 'expo-constants';
+import { getAllImages } from "../app/api"
 
-
-const images = [
+const dimages = [
   'https://images.pexels.com/photos/1323550/pexels-photo-1323550.jpeg',
   'https://images.pexels.com/photos/670061/pexels-photo-670061.jpeg',
   'https://images.pexels.com/photos/2080960/pexels-photo-2080960.jpeg',
@@ -13,6 +13,19 @@ const height = Dimensions.get('window').height;
 const marginTop = Constants.statusBarHeight;
 
 export default function CarouselView() {
+  const [images, setImages] = useState(dimages);
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const response = await getAllImages();
+        const images = response.map(image => image.url);
+        setImages(images);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchImages();
+  }, []);
   return (
     <View style={styles.carouselContainer}>
       <Carousel
@@ -56,7 +69,7 @@ const styles = StyleSheet.create({
   carousel: {
     height: '100%',
     width: '100%',
-    borderRadius: 20, 
+    borderRadius: 20,
     overflow: 'hidden', // Match the image's border radius
     // backgroundColor: 'blue',
   },

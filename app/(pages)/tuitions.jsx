@@ -1,53 +1,42 @@
-import React, { useState } from 'react';
-import { ScrollView, Text, View, StyleSheet, FlatList, TextInput, Linking, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, Text, View, StyleSheet, FlatList, TextInput, Linking, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { getAllTuitions } from '../api';
+// const tuitionData = [
+//     {
+//         id: '1',
+//         code: 'T-7890',
+//         gender: 'Female',
+//         qualification: 'M.Sc in Physics, B.Ed',
+//         address: 'Mirpur 10, Dhaka',
+//         students: 12,
+//         salary: '8000 BDT',
+//         subjects: 'Physics, Higher Math',
+//         daysPerWeek: 6
+//     },
+//     {
+//         id: '2',
+//         code: 'T-7891',
+//         gender: 'Male',
+//         qualification: 'B.A in English, MA in Education',
+//         experience: '4 Years',
+//         address: 'Uttara Sector 11, Dhaka',
+//         students: 8,
+//         salary: '6500 BDT',
+//         subjects: 'English, General Math',
+//         daysPerWeek: 5
+//     },
+//     // Add more tuition objects here
+// ];
 
-const tuitionData = [
-    {
-        id: '1',
-        code: 'T-7890',
-        gender: 'Female',
-        qualification: 'M.Sc in Physics, B.Ed',
-        address: 'Mirpur 10, Dhaka',
-        students: 12,
-        salary: '8000 BDT',
-        subjects: 'Physics, Higher Math',
-        daysPerWeek: 6
-    },
-    {
-        id: '2',
-        code: 'T-7891',
-        gender: 'Male',
-        qualification: 'B.A in English, MA in Education',
-        experience: '4 Years',
-        address: 'Uttara Sector 11, Dhaka',
-        students: 8,
-        salary: '6500 BDT',
-        subjects: 'English, General Math',
-        daysPerWeek: 5
-    },
-    // Add more tuition objects here
-];
 const contactNumber = '1234567890';
 const TuitionCard = ({ tuition }) => {
 
     const handleContactPress = () => {
-        if (contactNumber) { // Assuming tuition object has contactNumber
-            const phoneNumber = `tel:${contactNumber}`;
-
-            Linking.canOpenURL(phoneNumber)
-                .then(supported => {
-                    if (!supported) {
-                        Alert.alert('এই ডিভাইসে ফোন কল সমর্থিত নয়।');
-                    } else {
-                        return Linking.openURL(phoneNumber);
-                    }
-                })
-                .catch(err => console.error('একটি ত্রুটি ঘটেছে', err));
-        } else {
-            Alert.alert('যোগাযোগের নম্বর উপলব্ধ নয়।');
-        }
+        Linking.openURL(`tel:01779485142`).catch((err) => {
+            Alert.alert('কল করা যাচ্ছে না', 'সরাসরি ডায়াল করুন: ' + job.contactNumber);
+        });
     };
 
     return (
@@ -125,7 +114,8 @@ const TuitionCard = ({ tuition }) => {
 
 const TuitionPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
-
+    const [tuitionData, setTuitionData] = useState([]);
+    const [loding, setLoding] = useState(true);
     // Filter the tuition data based on the search query
     const filteredData = tuitionData.filter((item) =>
         item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -135,6 +125,29 @@ const TuitionPage = () => {
         item.subjects.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+
+    const getTuitionsData = async () => {
+        try {
+            const tuitions = await getAllTuitions();
+            setTuitionData(tuitions);
+        } catch (error) {
+            Alert.alert('Failed to get jobs');
+        } finally {
+            setLoding(false);
+        }
+    };
+
+    useEffect(() => {
+        getTuitionsData();
+    }, []);
+
+    if (loding) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
     return (
         <SafeAreaView style={styles.container}>
             {/* Search Input */}
@@ -184,6 +197,11 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 16,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

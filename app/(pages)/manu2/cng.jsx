@@ -1,11 +1,14 @@
 import { useFonts } from 'expo-font';
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, Text, TextInput, ScrollView, Pressable, Alert, Linking } from 'react-native';
+import { setContext } from '../../../context/userContext';
+import { createCngOrder } from '../../api';
 
 export default function CNGBookingScreen() {
+  const { user } = setContext();
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
+    name: user?.name || '',
+    phone: user?.number || '',
     pickup: '',
     destination: '',
     date: '',
@@ -37,23 +40,54 @@ export default function CNGBookingScreen() {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
+  const openWhatsApp = async () => {
+    const phoneNumber = '8801779481759';
+    const message = 'হ্যালো, এটা আমার অ্যাপ থেকে একটি বার্তা।';
+    const whatsappURL = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
-  const handleSubmit = () => {
+    try {
+      const supported = await Linking.canOpenURL(whatsappURL);
+
+      if (supported) {
+        await Linking.openURL(whatsappURL);
+      } else {
+        Alert.alert(
+          'WhatsApp ইনস্টল করা নেই', 'WhatsApp ইনস্টল করুন বার্তা পাঠানোর জন্য।',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening WhatsApp:', error);
+      Alert.alert(
+        'কিছু ভুল হয়েছে। দয়া করে আবার চেষ্টা করুন।',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+  const handleSubmit = async () => {
     if (!validateForm()) return;
-
-    console.log('Booking Data:', formData);
-    Alert.alert('বুকিং সফল!', 'আপনার CNG বুকিংটি সফলভাবে সম্পন্ন হয়েছে');
-    // Reset form
-    setFormData({
-      name: '',
-      phone: '',
-      pickup: '',
-      destination: '',
-      date: '',
-      time: '',
-      passengers: '',
-      specialRequest: ''
-    });
+    try {
+      const response = await createCngOrder(formData);
+      if (!response) {
+        Alert.alert('Error', 'Failed to create order');
+        return;
+      }
+      Alert.alert('বুকিং সফল!', 'আপনার বুকিংটি সফলভাবে সম্পন্ন হয়েছে');
+      setFormData({
+        name: '',
+        phone: '',
+        pickup: '',
+        destination: '',
+        date: '',
+        time: '',
+        passengers: '',
+        specialRequest: ''
+      });
+    } catch (error) {
+      console.error('Error creating car order:', error);
+      Alert.alert('Error', 'Failed to create order');
+      return;
+    }
   };
 
   const [fontsLoaded] = useFonts({
@@ -171,18 +205,18 @@ export default function CNGBookingScreen() {
         <Text style={styles.submitButtonText}>বুকিং নিশ্চিত করুন</Text>
       </Pressable>
 
-     <Text style={{
-             fontSize: 18, // Equivalent to text-lg (16px or 18px depending on the base size)
-             color: '#4B5563', // Equivalent to text-gray-600
-             fontFamily: 'BanglaFont', // Replace with the actual font name for BanglaFont
-             textAlign: 'center',
-             marginTop: 18,
-           }}>সরাসরি বুকিং দিতে যোগাযোগ করুন</Text>
-           <Pressable
-             className='bg-[#25D366] p-2 rounded-full text-center flex-row items-center justify-center mt-3'
-             onPress={handleSubmit}>
-             <Text className='text-white text-xl font-bold'>WhatsApp</Text>
-           </Pressable>
+      <Text style={{
+        fontSize: 18, // Equivalent to text-lg (16px or 18px depending on the base size)
+        color: '#4B5563', // Equivalent to text-gray-600
+        fontFamily: 'BanglaFont', // Replace with the actual font name for BanglaFont
+        textAlign: 'center',
+        marginTop: 18,
+      }}>সরাসরি বুকিং দিতে যোগাযোগ করুন</Text>
+      <Pressable
+        className='bg-[#25D366] p-2 rounded-full text-center flex-row items-center justify-center mt-3'
+        onPress={openWhatsApp}>
+        <Text className='text-white text-xl font-bold'>WhatsApp</Text>
+      </Pressable>
     </ScrollView>
   );
 }

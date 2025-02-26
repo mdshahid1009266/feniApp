@@ -12,7 +12,7 @@ const SkeletonLoader = () => {
           duration: 1500,
           useNativeDriver: true,
         }),
-       
+
       ])
     ).start();
   }, []);
@@ -32,7 +32,7 @@ const SkeletonLoader = () => {
           <View style={[styles.subtitle, { width: '60%' }]} />
         </View>
       </View>
-      
+
       <Animated.View
         style={[
           styles.shimmer,
@@ -49,50 +49,54 @@ const SkeletonLoader = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        margin: 8,
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#e0e0e0',
-        marginRight: 16,
-    },
-    content: {
-        flex: 1,
-    },
-    title: {
-        height: 16,
-        backgroundColor: '#e0e0e0',
-        borderRadius: 4,
-        marginBottom: 8,
-        width: '70%',
-    },
-    subtitle: {
-        height: 12,
-        backgroundColor: '#e0e0e0',
-        borderRadius: 4,
-        marginBottom: 6,
-        width: '90%',
-    },
-    shimmer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    },
+  container: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    margin: 8,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: "100%",
+    height: 150,
+    borderRadius: 25,
+    backgroundColor: '#e0e0e0',
+    marginRight: 16,
+  },
+  content: {
+    display:"flex",
+    flexDirection:"column",
+    gap:10,
+    width:"100%",
+    marginTop:10
+  },
+  title: {
+    height: 16,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    marginBottom: 8,
+    width: '70%',
+  },
+  subtitle: {
+    height: 12,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    marginBottom: 6,
+    width: '90%',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
 });
 
 export default SkeletonLoader;

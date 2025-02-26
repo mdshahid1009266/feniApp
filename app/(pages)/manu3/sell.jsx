@@ -1,32 +1,94 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { MaterialIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+import axios from 'axios';
+import { setContext } from '../../../context/userContext';
+
+const categories = ['Bike', 'Furniture', 'Book', 'Electronics', 'Mobile', 'Others'];
+const API_URL = 'http://192.168.0.102:2000/api/products';
 
 const ProductForm = () => {
+  const { isLogged, user } = setContext();
   const [product, setProduct] = useState({
     name: '',
     price: '',
     description: '',
+    category: '',
     images: []
   });
   const [errors, setErrors] = useState({});
+  const [showCategories, setShowCategories] = useState(false);
+  const [loading, setLoading] = useState(false); // Added loading state
 
   const validateForm = () => {
     const newErrors = {};
     if (!product.name.trim()) newErrors.name = 'Product name is required';
     if (!product.price.trim()) newErrors.price = 'Price is required';
     if (isNaN(product.price) || Number(product.price) <= 0) newErrors.price = 'Invalid price';
+    if (!product.category) newErrors.category = 'Category is required';
     if (product.images.length === 0) newErrors.images = 'At least one image is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      // Handle form submission here
-      Alert.alert('Success', 'Product submitted successfully!');
-      console.log('Product Data:', product);
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('name', product.name);
+    formData.append('description', product.description);
+    formData.append('price', product.price);
+    formData.append('category', product.category);
+    formData.append('sellerId', user._id);
+
+    try {
+      for (const uri of product.images) {
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          Alert.alert('Error', 'Image file not found');
+          return;
+        }
+
+        const fileType = fileInfo.uri.split('.').pop();
+        const response = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        formData.append('images', {
+          uri,
+          name: `image_${Date.now()}.${fileType}`,
+          type: `image/${fileType}`,
+          data: response,
+        });
+      }
+
+      const response = await axios.post(API_URL, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        Alert.alert('Success', 'Product submitted successfully!');
+        setProduct({
+          name: '',
+          price: '',
+          description: '',
+          category: '',
+          images: []
+        });
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add product. Please check your connection.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +126,7 @@ const ProductForm = () => {
     }));
   };
 
-  return (
+  return isLogged ? (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>Add New Product</Text>
 
@@ -97,12 +159,41 @@ const ProductForm = () => {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Description</Text>
         <TextInput
-          style={[styles.input, { height: 100 }]}
+          style={[styles.input, { height: 100,textAlignVertical: 'top' }]}
           placeholder="Enter product description"
           multiline
+          numberOfLines={4}
           value={product.description}
           onChangeText={(text) => setProduct({ ...product, description: text })}
         />
+      </View>
+
+      {/* Category Selection */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Category</Text>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowCategories(!showCategories)}
+        >
+          <Text>{product.category || 'Select Category'}</Text>
+        </TouchableOpacity>
+        {showCategories && (
+          <View style={styles.categoryContainer}>
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.categoryButton}
+                onPress={() => {
+                  setProduct({ ...product, category });
+                  setShowCategories(false);
+                }}
+              >
+                <Text>{category}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {errors.category && <Text style={styles.error}>{errors.category}</Text>}
       </View>
 
       {/* Image Upload Section */}
@@ -112,17 +203,17 @@ const ProductForm = () => {
           {product.images.map((uri, index) => (
             <View key={index} style={styles.imageWrapper}>
               <Image source={{ uri }} style={styles.image} />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.removeButton}
                 onPress={() => removeImage(index)}
               >
-                <MaterialIcons name="cancel" size={24} color="red" />
+                <Ionicons name="close-circle" size={24} color="red" />
               </TouchableOpacity>
             </View>
           ))}
           {product.images.length < 3 && (
             <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-              <MaterialIcons name="add-a-photo" size={32} color="#666" />
+              <Ionicons name="add-circle-outline" size={32} color="#666" />
             </TouchableOpacity>
           )}
         </View>
@@ -130,14 +221,58 @@ const ProductForm = () => {
       </View>
 
       {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitText}>Submit Product</Text>
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={loading} // Disable button when loading
+      >
+        {loading ? (
+          <ActivityIndicator color="white" /> // Show loading indicator
+        ) : (
+          <Text style={styles.submitText}>Submit Product</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
+  ) : (
+    <View style={styles.container1}>
+      <Text style={styles.text1}>Please login or create an account to add a new product</Text>
+      <Link href="/profile" style={styles.link1}>
+        Login
+      </Link>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f7f7f7',
+    padding: 20,
+  },
+  text1: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+    lineHeight: 24,
+  },
+  link1: {
+    backgroundColor: '#007bff',
+    color: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+  },
   container: {
     flexGrow: 1,
     padding: 20,
@@ -210,11 +345,24 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginVertical: 20,
+    justifyContent: 'center', // for aligning ActivityIndicator
   },
   submitText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  categoryContainer: {
+    marginTop: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: 'white',
+  },
+  categoryButton: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
 });
 

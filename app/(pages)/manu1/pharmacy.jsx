@@ -72,7 +72,7 @@ const PharmacyPage = () => {
           onPress={() => handleWhatsApp(item.phone)}
         >
           <Icon name="whatsapp" size={20} color="#fff" />
-          <Text style={styles.buttonText}>হোয়াটসঅ্যাপ</Text>
+          <Text className='font-[BanglaFont] text-white text-2xl ml-2' >হোয়াটসঅ্যাপ</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -204,9 +204,13 @@ const styles = StyleSheet.create({
   callButton: {
     backgroundColor: '#4A90E2',
     marginRight: 10,
+    flex: 1,
+    justifyContent: 'center',
   },
   whatsappButton: {
+    justifyContent: 'center',
     backgroundColor: '#25D366',
+    color: '#FFF',
     marginLeft: 10,
   },
   buttonText: {

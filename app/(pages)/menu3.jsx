@@ -3,10 +3,10 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 
 const menuItems = [
   { name: 'বাইক', image: require('../../assets/images/menu/menu3/image1.jpg'), ref: 'manu3/products?catagory=Bike' },
-  { name: 'ফার্নিচার', image: require('../../assets/images/menu/menu3/image2.png'), ref: 'manu3/product?catagory=Furniture' },
+  { name: 'ফার্নিচার', image: require('../../assets/images/menu/menu3/image2.png'), ref: 'manu3/products?catagory=Furniture' },
   { name: 'বই', image: require('../../assets/images/menu/menu3/image3.jpg'), ref: 'manu3/products?catagory=Book' },
   { name: 'ইলেকট্রনিক্স', image: require('../../assets/images/menu/menu3/image4.jpg'), ref: 'manu3/products?catagory=Electronics' },
-  { name: 'মোবাইল', image: require('../../assets/images/menu/menu3/image5.png'), ref: 'manu3/products?catagory=Mobile' },
+  { name: 'মোবাইল', image: require('../../assets/images/menu/menu3/image55.jpeg'), ref: 'manu3/products?catagory=Mobile' },
   { name: 'Others', image: require('../../assets/images/menu/others.png'), ref: 'manu3/products?catagory=Others' },
 ];
 

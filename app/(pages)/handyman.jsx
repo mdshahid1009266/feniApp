@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { createLabor } from '../api';
+import { router } from 'expo-router'
+
 import {
     View,
     Text,
@@ -12,17 +15,18 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-
+import { setContext } from "../../context/userContext";
 export default function MistriLagbeScreen() {
     const [fontsLoaded] = useFonts({
         BanglaFont: require("../../assets/fonts/SolaimanLipi.ttf"),
     });
 
+    const { user } = setContext();
     // Use a single object to hold all form values
     const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        location: '',
+        name: user?.name || '',
+        phone: user?.number || '',
+        location: user?.address || '',
         type: '',
         description: ''
     });
@@ -34,7 +38,7 @@ export default function MistriLagbeScreen() {
         }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const { name, phone, location, type, description } = formData;
 
         // Check if all fields are filled
@@ -43,11 +47,17 @@ export default function MistriLagbeScreen() {
             return;
         }
 
-        // Log the data if everything is filled correctly
-        console.log(formData);
-
-        // Handle submission logic here (e.g., API call)
-        Alert.alert('Submitted', 'Your request has been submitted.');
+        try {
+            const response = await createLabor(formData);
+            if (response) {
+                Alert.alert('Your request has been submitted Successfully!');
+                router.replace('/'); 
+            } else {
+                Alert.alert('Error', response.message || 'Submission failed');
+            }
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (

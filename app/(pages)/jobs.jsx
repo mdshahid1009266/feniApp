@@ -1,45 +1,10 @@
-const jobData = [
-    {
-        employer: "টেকনো কোম্পানি",
-        jobType: "ফুল টাইম",
-        salary: "আলোচনা সাপেক্ষে",
-        qualification: "এইচএসসি/সমমান",
-        experience: "১-২ বছর",
-        deadline: "১৫ ডিসেম্বর, ২০২৩",
-        location: "ঢাকা",
-        description: "অফিস সহকারী",
-        contactNumber: "017xxxxxxxx",
-    },
-    {
-        employer: "গ্রামীন সংস্থা",
-        jobType: "পার্ট টাইম",
-        salary: "১৫,০০০ - ২০,০০০ টাকা",
-        qualification: "স্নাতক",
-        experience: "প্রয়োজন নেই",
-        deadline: "২০ ডিসেম্বর, ২০২৩",
-        location: "চট্টগ্রাম",
-        description: "ডেটা এন্ট্রি অপারেটর",
-        contactNumber: "018xxxxxxxx",
-    },
-    {
-        employer: "সিটি গ্রুপ",
-        jobType: "চুক্তিভিত্তিক",
-        salary: "২৫,০০০ - ৩০,০০০ টাকা",
-        qualification: "বিবিএ/এমবিএ",
-        experience: "২-৩ বছর",
-        deadline: "২৫ ডিসেম্বর, ২০২৩",
-        location: "খুলনা",
-        description: "মার্কেটিং এক্সিকিউটিভ",
-        contactNumber: "019xxxxxxxx",
-    },
-    // Add more job data here...
-];
 
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
+
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, TextInput, ScrollView, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-
+import { getAllJobs } from '../api';
 
 
 const JobItem = ({ job }) => {
@@ -94,7 +59,9 @@ const JobItem = ({ job }) => {
 
 const App = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [filteredJobs, setFilteredJobs] = useState(jobData);
+    const [jobData, setJobData] = useState([]);
+    const [loding, setLoding] = useState(true);
+    const [filteredJobs, setFilteredJobs] = useState([]); // Initialize filteredJobs to empty array
 
     const handleSearch = (text) => {
         setSearchQuery(text);
@@ -110,6 +77,28 @@ const App = () => {
         setFilteredJobs(filtered);
     };
 
+    const getJobs = async () => {
+        try {
+            const jobs = await getAllJobs();
+            setJobData(jobs);
+            setFilteredJobs(jobs); // Initially set filteredJobs to all jobs after fetching
+        } catch (error) {
+            Alert.alert('Failed to get jobs');
+        } finally {
+            setLoding(false);
+        }
+    };
+
+    useEffect(() => {
+        getJobs();
+    }, []);
+    if (loding) {
+        return (
+            <View className="flex-1 bg-blue-100 pt-10 px-4 min-h-screen  items-center justify-center">
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        )
+    }
     return (
         <View className="flex-1 bg-blue-100 pt-10 px-4">
             <View className="mb-4">

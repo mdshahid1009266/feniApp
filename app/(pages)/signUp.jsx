@@ -3,7 +3,11 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react'
 import { Link } from 'expo-router'
 import { createUser } from '../api';
+import { storeData } from "../localStorage"
+import { setContext } from "../../context/userContext"
+
 function SignUp() {
+    const { setIsLogged, setUser } = setContext();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -34,7 +38,13 @@ function SignUp() {
             const { confirmPassword, ...dataWithoutConfirmPassword } = formData;
             try {
                 const response = await createUser(dataWithoutConfirmPassword);
-                console.log(response);
+                if (!response) {
+                    Alert.alert('Error', 'Failed to create account');
+                    return;
+                }
+                await storeData(response)
+                setUser(response)
+                setIsLogged(true);
                 Alert.alert('Success', 'Account created successfully');
                 router.replace('/');
             } catch (error) {

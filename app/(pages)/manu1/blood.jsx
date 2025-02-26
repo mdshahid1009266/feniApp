@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, Linking, TextInput, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Linking,
+  TextInput,
+  ScrollView,
+  Modal,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createDonor, getAllDonor } from "../../api";
 
 const DonorCard = () => {
+  const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState(new Set());
-  const [filteredData, setFilteredData] = useState(data);
+  const [filteredData, setFilteredData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newDonor, setNewDonor] = useState({
     name: '',
@@ -15,6 +28,7 @@ const DonorCard = () => {
     details: '',
     bloodGroup: '',
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -45,39 +59,68 @@ const DonorCard = () => {
     });
     setFilteredData(filtered);
   };
-
-  const handleAddDonor = () => {
-    setFilteredData([...filteredData, newDonor]);
-    console.log('New Donor:', newDonor);
-    
-    setNewDonor({ name: '', address: '', number: '', lastDonation: '', details: '', bloodGroup: '' });
-    setModalVisible(false);
+  const fetchData = async () => {
+    try {
+      const donors = await getAllDonor();
+      setData(donors);
+      setFilteredData(donors);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  // --------------------------------------------------------------------------------------------------------
+  const handleAddDonor = async () => {
+    if (
+      !newDonor.name ||
+      !newDonor.address ||
+      !newDonor.number ||
+      !newDonor.lastDonation ||
+      !newDonor.bloodGroup
+    ) {
+      Alert.alert('Please fill out all the fields before submitting.');
+      return;
+    }
 
+    try {
+      const response = await createDonor(newDonor);
+      if (!response) {
+        Alert.alert('Error', 'Failed to create donor');
+        return;
+      }
+      // Update both data and filteredData to include the new donor.
+      const updatedData = [...data, newDonor];
+      setData(updatedData);
+      filterData(searchQuery, selectedFilters);
+      console.log('New Donor:', newDonor);
+      setNewDonor({ name: '', address: '', number: '', lastDonation: '', details: '', bloodGroup: '' });
+      fetchData();
+      setModalVisible(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create donor');
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const renderItem = ({ item }) => (
     <View className="bg-white rounded-2xl p-5 mb-4 shadow-lg shadow-gray-300 mx-4">
-      <View className="flex-row items-start mb-4">
-        <Image
-          source={{ uri: item.img }}
-          className="w-24 h-24 rounded-2xl mr-4"
-        />
-        <View className="flex-1">
-          <Text className="text-xl font-bold text-gray-900 mb-1">
-            {item.name}
+      <View className="flex-row items-start mb-4 justify-between">
+        <Text className="text-xl font-bold text-gray-900 mb-1">
+          {item.name}
+        </Text>
+        <View className="bg-red-200 px-4 py-2 rounded-full self-start">
+          <Text className="text-red-600 font-semibold">
+            {item.bloodGroup}
           </Text>
-          <View className="bg-red-200 px-4 py-2 rounded-full self-start">
-            <Text className="text-red-600 font-semibold">
-              {item.bloodGroup}
-            </Text>
-          </View>
         </View>
       </View>
 
       <View className="space-y-3 mb-5">
         <InfoRow label="Last Donation" value={item.lastDonation} />
-        <InfoRow label="Location" value={`${item.thana}, ${item.address}`} />
+        <InfoRow label="Location" value={`${item.address}`} />
       </View>
 
       <Text className="text-gray-600 italic mb-5 leading-5">
@@ -95,6 +138,14 @@ const DonorCard = () => {
       </TouchableOpacity>
     </View>
   );
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-blue-100">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-blue-100">
@@ -126,15 +177,45 @@ const DonorCard = () => {
             <View className="bg-white rounded-2xl p-6">
               <Text className="text-xl font-bold mb-4">Add New Donor</Text>
               <ScrollView>
-                <TextInput placeholder="Name" value={newDonor.name} onChangeText={(text) => setNewDonor({ ...newDonor, name: text })} className="border p-3 mb-3 rounded" />
-                <TextInput placeholder="Address" value={newDonor.address} onChangeText={(text) => setNewDonor({ ...newDonor, address: text })} className="border p-3 mb-3 rounded" />
-                <TextInput placeholder="Number" value={newDonor.number} onChangeText={(text) => setNewDonor({ ...newDonor, number: text })} keyboardType="phone-pad" className="border p-3 mb-3 rounded" />
-                <TextInput placeholder="Last Donation" value={newDonor.lastDonation} onChangeText={(text) => setNewDonor({ ...newDonor, lastDonation: text })} className="border p-3 mb-3 rounded" />
-                <TextInput placeholder="Comment" value={newDonor.details} onChangeText={(text) => setNewDonor({ ...newDonor, details: text })} className="border p-3 mb-3 rounded" />
+                <TextInput
+                  placeholder="Name"
+                  value={newDonor.name}
+                  onChangeText={(text) => setNewDonor({ ...newDonor, name: text })}
+                  className="border p-3 mb-3 rounded"
+                />
+                <TextInput
+                  placeholder="Address"
+                  value={newDonor.address}
+                  onChangeText={(text) => setNewDonor({ ...newDonor, address: text })}
+                  className="border p-3 mb-3 rounded"
+                />
+                <TextInput
+                  placeholder="Number"
+                  value={newDonor.number}
+                  onChangeText={(text) => setNewDonor({ ...newDonor, number: text })}
+                  keyboardType="phone-pad"
+                  className="border p-3 mb-3 rounded"
+                />
+                <TextInput
+                  placeholder="Last Donation"
+                  value={newDonor.lastDonation}
+                  onChangeText={(text) => setNewDonor({ ...newDonor, lastDonation: text })}
+                  className="border p-3 mb-3 rounded"
+                />
+                <TextInput
+                  placeholder="Comment"
+                  value={newDonor.details}
+                  onChangeText={(text) => setNewDonor({ ...newDonor, details: text })}
+                  className="border p-3 mb-3 rounded"
+                />
                 <Text className="text-lg font-bold mb-2">Blood Group:</Text>
                 <ScrollView horizontal className="flex-row space-x-2" showsHorizontalScrollIndicator={false}>
                   {bloodGroups.map((group) => (
-                    <TouchableOpacity key={group} onPress={() => setNewDonor({ ...newDonor, bloodGroup: group })} className={`px-4 py-2 rounded-full ${newDonor.bloodGroup === group ? 'bg-red-500' : 'bg-gray-100'}`}>
+                    <TouchableOpacity
+                      key={group}
+                      onPress={() => setNewDonor({ ...newDonor, bloodGroup: group })}
+                      className={`px-4 py-2 rounded-full ${newDonor.bloodGroup === group ? 'bg-red-500' : 'bg-gray-100'}`}
+                    >
                       <Text className={`${newDonor.bloodGroup === group ? 'text-white' : 'text-gray-600'}`}>{group}</Text>
                     </TouchableOpacity>
                   ))}
@@ -160,15 +241,13 @@ const DonorCard = () => {
             <TouchableOpacity
               key={group}
               onPress={() => toggleFilter(group)}
-              className={`px-4 py-2 rounded-full ${selectedFilters.has(group)
-                ? 'bg-red-500'
-                : 'bg-gray-100'
+              className={`px-4 py-2 rounded-full ${selectedFilters.has(group) ? 'bg-red-500' : 'bg-gray-100'
                 }`}
             >
-              <Text className={`font-medium ${selectedFilters.has(group)
-                ? 'text-white'
-                : 'text-gray-600'
-                }`}>
+              <Text
+                className={`font-medium ${selectedFilters.has(group) ? 'text-white' : 'text-gray-600'
+                  }`}
+              >
                 {group}
               </Text>
             </TouchableOpacity>
@@ -186,7 +265,7 @@ const DonorCard = () => {
           <View className="items-center mt-10">
             <Ionicons name="heart-dislike" size={40} color="#d1d5db" />
             <Text className="text-gray-400 text-lg mt-4">
-              No matching donors found
+              কোনো উপযুক্ত রক্ত দাতা পাওয়া যায়নি।
             </Text>
           </View>
         }
@@ -202,12 +281,12 @@ const InfoRow = ({ label, value }) => (
   </View>
 );
 
-
 export default DonorCard;
+
 
 const data = [
   {
-    name: 'Zubayet Hossain Shadhin',
+    name: 'Zubayet Hossain Shadhin ',
     bloodGroup: 'B+',
     img: "https://cdn-icons-png.flaticon.com/512/10337/10337609.png",
     lastDonation: '20/6/24',

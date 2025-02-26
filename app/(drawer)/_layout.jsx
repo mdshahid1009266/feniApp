@@ -285,7 +285,7 @@ export default function Layout() {
 const styles = StyleSheet.create({
     drawerHeader: {
         padding: 20,
-        backgroundColor: "#0984e3",
+        backgroundColor: "#000",
         alignItems: "center",
         borderRadius: 20,
         marginBottom: 20,

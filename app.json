@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "fenicity",
-    "slug": "fenicity",
+    "name": "Upokar",
+    "slug": "Upokar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/finilogo.webp",
+    "icon": "./assets/images/splash1.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -20,14 +20,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash.png",
+          "image": "./assets/images/splash1.jpg",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "enableFullScreenImage": true,
@@ -41,7 +41,7 @@
           "ios": {
             "supportsTablet": true,
             "splashScreen": {
-              "image": "./assets/images/splash.png",
+              "image": "./assets/images/splash1.jpg",
               "resizeMode": "contain",
               "backgroundColor": "#ffffff"
             },

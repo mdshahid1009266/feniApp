@@ -1,5 +1,8 @@
 import { Link } from 'expo-router';
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, Alert, ActivityIndicator } from 'react-native';
+import { getGasPrice } from '../api';
+import { useEffect, useState } from 'react';
+import { Try } from 'expo-router/build/views/Try';
 
 const styles = StyleSheet.create({
     grid: {
@@ -37,6 +40,8 @@ const styles = StyleSheet.create({
 });
 
 const Menu1 = () => {
+    const [gasPrice, setGasPrice] = useState({});
+    const [loding, setLoding] = useState(true);
     const menuItems = [
         { name: 'Omera', image: require('../../assets/images/menu/menu4/image1.jpg'), ref: "manu4/cylinder" },
         { name: 'Total', image: require('../../assets/images/menu/menu4/image2.png'), ref: "manu4/cylinder" },
@@ -45,27 +50,47 @@ const Menu1 = () => {
         { name: 'Others', image: require('../../assets/images/menu/others.png'), ref: "manu4/cylinder" },
     ];
 
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await getGasPrice();
+                setGasPrice(data);
+                setLoding(false);
+            } catch (error) {
+                Alert.alert('Error', 'Failed to fetch gas price. Please try again later.');
+            }
+        };
+        fetchData();
+    }, []);
+
+    console.log(gasPrice);
+    if (loding) {
+        return (
+            <View className="flex-1 bg-blue-100 pt-10 px-4 min-h-screen  items-center justify-center">
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        )
+    }
     return (
         <View style={styles.grid}>
             {menuItems.map((item, index) => (
-                < Link
+                <Link
                     href={{
                         pathname: item.ref,
-                        params: { rname: item.name }
+                        params: {
+                            gname: item.name,
+                            gprice: gasPrice[item.name] // passing the gas price for the specific company
+                        }
                     }}
-                    key={index} style={styles.cardContainer} >
+                    key={index} style={styles.cardContainer}>
                     <View style={styles.view}>
                         <Image source={item.image} style={styles.image} />
                         <Text style={styles.cardText}>{item.name}</Text>
                     </View>
                 </Link>
-            ))
-            }
-        </View >
+            ))}
+        </View>
     );
 };
 
 export default Menu1;
-
-
-
