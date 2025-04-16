@@ -1,38 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 import img from "../../../assets/images/demo.jpg"
-
-
-
-
-
-const hospitals = [
-  { name: 'হাসপাতাল ১', img: img },
-  { name: 'হাসপাতাল ২', img: img },
-  { name: 'হাসপাতাল ৩', img: img },
-  { name: 'হাসপাতাল ৪', img: img },
-  { name: 'হাসপাতাল ৫', img: img },
-  { name: 'হাসপাতাল ৬', img: img },
-  { name: 'হাসপাতাল ৭', img: img },
-  { name: 'হাসপাতাল ৮', img: img },
-  { name: 'হাসপাতাল ৯', img: img },
-  { name: 'হাসপাতাল ১০', img: img },
-  { name: 'হাসপাতাল ১১', img: img },
-  { name: 'হাসপাতাল ১২', img: img },
-  { name: 'হাসপাতাল ১৩', img: img },
-  { name: 'হাসপাতাল ১৪', img: img },
-  { name: 'হাসপাতাল ১৫', img: img },
-];
-
-
-
-
 
 const HospitalList = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredHospitals, setFilteredHospitals] = useState(hospitals);
+  const [hospitals, setHospitals] = useState([]);
+  const [filteredHospitals, setFilteredHospitals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const response = await axios.get('https://api-upokar.onrender.com/getAllHospitals');
+        if (response.data && Array.isArray(response.data)) {
+          setHospitals(response.data);
+          setFilteredHospitals(response.data);
+        } else {
+          setError('Invalid hospital data format');
+        }
+      } catch (err) {
+        setError('Failed to fetch hospitals. Please try again later.');
+        console.error('API Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
 
   const handleSearch = (text) => {
     setSearchQuery(text);
@@ -42,23 +41,47 @@ const HospitalList = () => {
     setFilteredHospitals(filtered);
   };
 
-
-  const renderHospitalCard = ({ item, index }) => (
-    <Link
-      key={index} // Assign the index as the key
-      href="manu1/HospitalDetails"
-      style={styles.cardContainer}
-    >
-      <View style={styles.view}>
-        <Image source={item.img} style={styles.hospitalImage} />
-        <View style={styles.textContainer}>
-          <Text style={styles.hospitalName}>{item.name}</Text>
-          {/* <Text style={styles.hospitalDetails}>{item.details}</Text> */}
+  const renderHospitalCard = ({ item, index }) => {
+    return (
+      <Link
+        key={index}
+        href={{
+          pathname: 'manu1/HospitalDetails',
+          params: { itemData: JSON.stringify(item) }
+        }}
+        style={styles.cardContainer}
+      >
+        <View style={styles.view}>
+          <Image
+            source={item.imageUrl ? { uri: item.imageUrl } : img}
+            style={styles.hospitalImage}
+            defaultSource={img}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.hospitalName}>{item.name}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#666" />
         </View>
-        <Ionicons name="chevron-forward" size={24} color="#666" />
+      </Link>
+    )
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
-    </Link>
-  );
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Ionicons name="warning" size={40} color="#ef4444" />
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -79,10 +102,17 @@ const HospitalList = () => {
         keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <Ionicons name="sad-outline" size={40} color="#666" />
+            <Text style={styles.emptyText}>কোন হাসপাতাল পাওয়া যায়নি</Text>
+          </View>
+        }
       />
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -114,14 +144,14 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 4, 
+    elevation: 4,
 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
   },
-  
+
   view: {
     padding: 12,
     display: 'flex',
@@ -154,6 +184,25 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 20,
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#ef4444',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 10,
+    textAlign: 'center',
+  },
 });
+
 
 export default HospitalList;

@@ -1,28 +1,9 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Linking, FlatList, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, Linking, FlatList, TextInput, ActivityIndicator } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
-// Sample ambulance data
-const ambulanceData = [
-  {
-    id: "1",
-    name: "City Ambulance",
-    address: "123 Main Street, Metropolis",
-    number: "+1234567890",
-  },
-  {
-    id: "2",
-    name: "Rapid Response",
-    address: "456 Elm Street, Gotham",
-    number: "+0987654321",
-  },
-  {
-    id: "3",
-    name: "Emergency Aid",
-    address: "789 Oak Street, Star City",
-    number: "+1122334455",
-  },
-];
+import axios from 'axios';
 
 const AmbulanceItem = ({ ambulance }) => {
   const handleCall = () => {
@@ -31,15 +12,47 @@ const AmbulanceItem = ({ ambulance }) => {
   };
 
   return (
-    <View className="bg-white p-4 mb-4 rounded-lg shadow">
-      <Text className="text-xl font-bold mb-2">{ambulance.name}</Text>
-      <Text className="text-gray-700 mb-1 text-lg">{ambulance.address}</Text>
-      <Text className="text-gray-700 mb-3 text-lg">{ambulance.number}</Text>
-      <TouchableOpacity onPress={handleCall} className="bg-blue-500 flex-row items-center mt-1 rounded-full p-2 justify-center">
-        <Text className="text-white text-center text-lg font-bold">Call</Text>
+    <View className="bg-white p-5 rounded-xl shadow-lg mb-4">
+      <Text className="text-xl font-bold text-gray-800 mb-3">{ambulance.name}</Text>
+
+      <View className="flex-row items-center mb-2">
+        <Icon
+          name="map-marker"
+          size={20}
+          color="#6B7280"
+          className="mr-2"
+        />
+        <Text className="text-gray-600 text-base">{ambulance.location}</Text>
+      </View>
+
+      <View className="flex-row items-center mb-4">
+        <Icon
+          name="phone"
+          size={20}
+          color="#6B7280"
+          className="mr-2"
+        />
+        <Text className="text-gray-600 text-base">{ambulance.number}</Text>
+      </View>
+
+      <TouchableOpacity
+        className="bg-blue-500 rounded-full px-4 py-3 justify-center items-center mb-3"
+        onPress={handleCall}
+      >
+        <Text className="text-white font-semibold text-lg">কল করুন</Text>
       </TouchableOpacity>
-      <TouchableOpacity className="flex-row items-center mt-3 bg-[#25D366] rounded-full p-2 justify-center" onPress={() => Linking.openURL("https://wa.me/+8801779481759")}>
-        <Text className="text-white text-lg font-bold ">WhatsApp</Text>
+
+      <TouchableOpacity
+        className="bg-[#25D366] rounded-full px-4 py-3 justify-center items-center flex-row"
+        onPress={() => Linking.openURL(`https://wa.me/${ambulance.contactNumber}`)}
+      >
+        <Icon
+          name="whatsapp"
+          size={24}
+          color="white"
+          className="mr-2"
+        />
+        <Text className="text-white font-semibold text-lg">WhatsApp</Text>
       </TouchableOpacity>
     </View>
   );
@@ -47,31 +60,83 @@ const AmbulanceItem = ({ ambulance }) => {
 
 const App = () => {
   const [searchText, setSearchText] = useState("");
+  const [ambulances, setAmbulances] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Filtered ambulance data based on search
-  const filteredData = ambulanceData.filter((ambulance) =>
-    ambulance.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    ambulance.address.toLowerCase().includes(searchText.toLowerCase()) ||
-    ambulance.number.toLowerCase().includes(searchText.toLowerCase())
-  );
+  useEffect(() => {
+    const fetchAmbulances = async () => {
+      try {
+        const response = await axios.get('https://api-upokar.onrender.com/getAllAmbulances');
+        if (response.data && Array.isArray(response.data)) {
+          setAmbulances(response.data);
+          setFilteredData(response.data);
+        } else {
+          setError('অ্যাম্বুলেন্স ডেটা লোড করতে সমস্যা হয়েছে');
+        }
+      } catch (err) {
+        setError('ডেটা লোড করতে ব্যর্থ হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন');
+        console.error('API Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAmbulances();
+  }, []);
+
+  useEffect(() => {
+    const filtered = ambulances.filter(ambulance =>
+      ambulance.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      ambulance.address?.toLowerCase().includes(searchText.toLowerCase()) ||
+      ambulance.contactNumber?.includes(searchText)
+    );
+    setFilteredData(filtered);
+  }, [searchText, ambulances]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-blue-100">
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="mt-4 text-gray-700 text-lg">লোড হচ্ছে...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center bg-blue-100 p-4">
+        <Ionicons name="sad-outline" size={50} color="#ef4444" />
+        <Text className="text-red-500 text-xl text-center mt-4 font-bold">{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-blue-100 p-4">
-      {/* Search Input */}
       <TextInput
         className="bg-white p-3 rounded-lg shadow mb-4 text-lg"
-        placeholder="Search Ambulance..."
+        placeholder="অ্যাম্বুলেন্স খুঁজুন..."
         placeholderTextColor="#777"
         value={searchText}
         onChangeText={setSearchText}
       />
 
-      {/* Ambulance List */}
       <FlatList
         data={filteredData}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => <AmbulanceItem ambulance={item} />}
-        ListEmptyComponent={<Text className="text-center text-gray-500 mt-4">No results found</Text>}
+        ListEmptyComponent={
+          <View className="items-center mt-8">
+            <Ionicons name="alert-circle-outline" size={40} color="#666" />
+            <Text className="text-gray-600 text-lg mt-2">
+              {ambulances.length === 0
+                ? "কোন অ্যাম্বুলেন্স পাওয়া যায়নি"
+                : "খুঁজে পাওয়া যায়নি"}
+            </Text>
+          </View>
+        }
       />
     </View>
   );

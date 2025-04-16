@@ -11,71 +11,49 @@ import {
   Linking
 } from 'react-native';
 
-const doctors = [
-  {
-    id: 1,
-    name: "Dr. John Smith",
-    title: "PHD at Gestrology",
-    specialty: "Cardiologist",
-    phone: "(555) 123-4567",
-    image: "https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg"
-  },
-  {
-    id: 2,
-    name: "Dr. Jane Doe",
-    title: "MD at SkinCare",
-    specialty: "Dermatologist",
-    phone: "(555) 987-6543",
-    image: "https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg"
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Davis",
-    title: "MD, Pediatric Specialist",
-    specialty: "Pediatrician",
-    phone: "(555) 555-1212",
-    image: "https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg"
-  },
-  // Add more doctor objects if needed.
-];
-
+const doctorImg="https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg"
+const doctorImg1="https://static.vecteezy.com/system/resources/previews/046/679/218/non_2x/smiling-muslim-female-doctor-in-white-coat-with-hijab-on-isolated-transparent-background-png.png"
 const DoctorCard = ({ doctor, serial }) => {
   // Function to initiate a call when the serial badge is pressed.
   const handleCall = () => {
-    // Remove any non-digit characters from the phone number.
-    const phoneNumber = doctor.phone.replace(/[^\d]/g, '');
-    Linking.openURL(`tel:${phoneNumber}`);
+    Linking.openURL(`tel:01600190821`);
+  };
+  const handleWhatsapp = () => {
+    Linking.openURL('whatsapp://send?phone=+8801600190821');
   };
 
   return (
     <View style={styles.card}>
       <Image
-        source={{ uri: doctor.image }}
+        source={{ uri: doctor.gender ==="male" ? doctorImg : doctorImg1 }}
         style={styles.doctorImage}
       />
       <View style={styles.infoContainer}>
         <View style={styles.textInfo}>
           <Text style={styles.name}>{doctor.name}</Text>
-          <Text style={styles.title}>{doctor.title}</Text>
-          <Text style={styles.specialty}>Specialty: {doctor.specialty}</Text>
+          <Text style={styles.title}>{doctor.specialty}</Text>
+          <Text style={styles.specialty}>{doctor.qualifications}</Text>
+          <View style={styles.callButtonContainer}>
           <TouchableOpacity style={styles.callButton} onPress={handleCall}>
-            <Text style={styles.callButtonText}>serial</Text>
+            <Text style={styles.callButtonText}>সিরিয়াল</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.whatsAppButton} onPress={handleWhatsapp}>
+            <Text style={styles.callButtonText}>whatsApp</Text>
+          </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
   );
 };
 
-const App = () => {
+const App = ({ doctors }) => {
   const [searchText, setSearchText] = useState('');
 
-  // Filter doctors by name, title, or specialty (case-insensitive)
   const filteredDoctors = doctors.filter(doctor => {
     const lowerSearch = searchText.toLowerCase();
     return (
       doctor.name.toLowerCase().includes(lowerSearch) ||
-      doctor.title.toLowerCase().includes(lowerSearch) ||
       doctor.specialty.toLowerCase().includes(lowerSearch)
     );
   });
@@ -85,7 +63,7 @@ const App = () => {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
-          placeholder="Search by name, title, or specialty"
+          placeholder="Search by name, specialty..."
           placeholderTextColor="#666"
           style={styles.searchInput}
           value={searchText}
@@ -94,7 +72,7 @@ const App = () => {
       </View>
       <FlatList
         data={filteredDoctors}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.name.toString()}
         renderItem={({ item, index }) => (
           <DoctorCard doctor={item} serial={index + 1} />
         )}
@@ -145,6 +123,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     // Android elevation
     elevation: 4,
+    gap: 5,
   },
   doctorImage: {
     width: 120,
@@ -152,8 +131,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    padding: 5,
-    // paddingHorizontal: 5,
+    paddingVertical: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -170,12 +148,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontStyle: 'italic',
+    fontWeight: '500',
     color: '#555',
-    marginVertical: 4,
+    marginVertical: 5,
   },
   specialty: {
     fontSize: 14,
     color: '#777',
+  },
+  callButtonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   callButton: {
     backgroundColor: '#0984e3',
@@ -183,6 +168,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
+    flex: 1,
+    paddingVertical: 5,
+  },
+  whatsAppButton: {
+    backgroundColor: '#25D366',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    flex: 1,
+    paddingVertical: 5,
   },
   callButtonText: {
     color: '#fff',

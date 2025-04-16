@@ -3,26 +3,21 @@ import { ScrollView, View, Text, Image, StyleSheet, Linking } from 'react-native
 import { MaterialIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import Doctors from "../doctors"
+import { useLocalSearchParams } from 'expo-router';
 const HospitalDetails = () => {
+
+    const { itemData } = useLocalSearchParams();
+
+    // Deserialize the item data
+    const hospitalDetails = JSON.parse(itemData);
     // Sample hospital data (replace with actual data)
     const hospital = {
-        name: 'City General Hospital',
-        image: 'https://static.vecteezy.com/system/resources/thumbnails/007/681/899/small/hospital-building-outside-composition-vector.jpg',
+        name: hospitalDetails.name,
+        image: hospitalDetails.img,
         contact: {
-            phone: '+1 (555) 123-4567',
-            email: 'info@cityhospital.com',
-            address: '123 Medical Center Dr, Health City, HC 54321'
-        },
-        services: [
-            'Emergency Care',
-            'Cardiology',
-            'Pediatrics',
-            'Orthopedics',
-            'Maternity',
-            'Oncology',
-            'Neurology',
-            'Radiology'
-        ]
+            phone: '01600-190821',
+            address: hospitalDetails.address,
+        }
     };
 
     const handleContactPress = (type, value) => {
@@ -60,11 +55,6 @@ const HospitalDetails = () => {
                     <Text style={styles.contactText}>{hospital.contact.phone}</Text>
                 </TouchableOpacity >
 
-                <TouchableOpacity style={styles.contactItem} onPress={() => handleContactPress('email', hospital.contact.email)}>
-                    <MaterialIcons name="email" size={24} color="#2A86FF" />
-                    <Text style={styles.contactText}>{hospital.contact.email}</Text>
-                </TouchableOpacity >
-
                 <TouchableOpacity style={styles.contactItem} onPress={() => handleContactPress('address')}>
                     <MaterialIcons name="location-on" size={24} color="#2A86FF" />
                     <Text style={styles.contactText}>{hospital.contact.address}</Text>
@@ -72,7 +62,7 @@ const HospitalDetails = () => {
             </View>
 
             <View>
-                <Doctors />
+                <Doctors  doctors={hospitalDetails.doctors}/>
             </View>
         </ScrollView>
     );
@@ -115,7 +105,7 @@ const styles = StyleSheet.create({
     },
     sectionContainer: {
         backgroundColor: 'white',
-        margin: 16,
+        marginBottom: 16,
         borderRadius: 12,
         padding: 20,
         shadowColor: '#000',

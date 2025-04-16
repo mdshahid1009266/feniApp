@@ -12,6 +12,7 @@ import {
 import { useFonts } from "expo-font";
 // import { useSafeAr } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 const CustomDrawerContent = (props) => {
     const pathname = usePathname();
 
@@ -40,14 +41,22 @@ const CustomDrawerContent = (props) => {
     return (
         <DrawerContentScrollView
             {...props}
-            style={{ flex: 1,padding: 0,
-                margin: 0 }} // Add this
+            style={{
+                flex: 1, padding: 0,
+                margin: 0
+            }} // Add this
             contentContainerStyle={{
                 flexGrow: 1,    // Add this
                 padding: 0,
                 margin: 0
             }}
         >
+            <StatusBar
+                backgroundColor="#000" // Set background color
+                style="light" // Set text color (light-content for dark text, dark-content for light text) 
+                hidden={false} // Show or hide the status bar (true to hide)
+                translucent={false} // Set to true for semi-transparent status bar 
+            />
             {/* Drawer Header */}
             <View style={styles.drawerHeader}>
                 <Text style={styles.drawerTitle}>আমাদের ফেনী</Text>
@@ -74,7 +83,7 @@ const CustomDrawerContent = (props) => {
                         }}
                         onPress={() =>
                             Linking.openURL(
-                                "https://facebook.com/YourPage"
+                                "https://www.facebook.com/profile.php?id=61572900792757"
                             )
                         }
                         // Override the active/focused background style
@@ -120,7 +129,7 @@ const CustomDrawerContent = (props) => {
                         label={"Call Us"}
                         labelStyle={styles.navItemLabel}
                         style={{ backgroundColor: "#fff", marginVertical: 0 }}
-                        onPress={() => Linking.openURL("tel:+1234567890")}
+                        onPress={() => Linking.openURL("tel:01600190821")}
                         // Override the active/focused background style
                         activeBackgroundColor="transparent"
                         // On Android, remove ripple effect if it still appears.
@@ -135,7 +144,7 @@ const CustomDrawerContent = (props) => {
                         label={"Send a Message"}
                         labelStyle={styles.navItemLabel}
                         style={{ backgroundColor: "#fff", marginVertical: 0 }}
-                        onPress={() => Linking.openURL("sms:+1234567890")}
+                        onPress={() => Linking.openURL("sms:01600190821 ")}
                         // Override the active/focused background style
                         activeBackgroundColor="transparent"
                         // On Android, remove ripple effect if it still appears.
@@ -152,7 +161,7 @@ const CustomDrawerContent = (props) => {
                         style={{ backgroundColor: "#fff", marginVertical: 0 }}
                         onPress={() =>
                             Linking.openURL(
-                                "mailto:example@email.com?subject=Inquiry&body=Hello, I would like to..."
+                                "mailto:palashmia654@gmail.com?subject=Inquiry&body=Hello, I would like to..."
                             )
                         }
                         // Override the active/focused background style
@@ -189,7 +198,11 @@ const CustomDrawerContent = (props) => {
                         activeBackgroundColor="transparent"
                         // On Android, remove ripple effect if it still appears.
                         pressColor="transparent"
-                        onPress={() => router.push("/developer")}
+                        onPress={() =>
+                            Linking.openURL(
+                                "https://mdshahid.netlify.app"
+                            )
+                        }
                     />
 
                     {/* Share */}
@@ -230,7 +243,7 @@ const CustomDrawerContent = (props) => {
                         style={{ marginVertical: 0 }}
                         onPress={() =>
                             Linking.openURL(
-                                "https://play.google.com/store/apps/details?id=com.example.app" // Replace with your app's store URL
+                                "https://play.google.com/store/apps/details?id=com.upokar.app" // Replace with your app's store URL
                             )
                         }
                         // Override the active/focused background style

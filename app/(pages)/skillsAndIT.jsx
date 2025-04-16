@@ -7,7 +7,7 @@ const coachesData = [
     id: 1,
     name: 'John Fitness',
     description: 'Certified Personal Trainer & Nutrition Specialist with 8 years of experience',
-    image: 'https://images.unsplash.com/photo-1581009137042-c552e485697a',
+    image: 'https://dcastalia.com/blog/wp-content/uploads/2023/03/Iinformation-technology.jpg',
     phone: '15551234567',
     rating: 4.9
   },
@@ -15,7 +15,7 @@ const coachesData = [
     id: 2,
     name: 'Sarah Yoga',
     description: 'Professional Yoga Instructor and Mindfulness Coach',
-    image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883',
+    image: 'https://dcastalia.com/blog/wp-content/uploads/2023/03/Iinformation-technology.jpg',
     phone: '15559876543',
     rating: 4.8
   },

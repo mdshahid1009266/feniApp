@@ -1,7 +1,11 @@
 {
   "expo": {
+    "platforms": [
+      "android"
+    ],
     "name": "Upokar",
-    "slug": "Upokar",
+    "slug": "upokar-app",
+    "owner": "mdshahid73844",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/splash1.jpg",
@@ -9,13 +13,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/finilogo.webp",
+        "foregroundImage": "./assets/images/fenilogo.jpg",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.mdshahid73844.upokarapp"
     },
     "web": {
       "bundler": "metro",
@@ -75,7 +80,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "540499cc-2b6c-4926-ac64-e3bb05f96adb"
+        "projectId": "9f0d8c23-6879-45f9-a152-621c8e92c8b8"
       }
     }
   }
